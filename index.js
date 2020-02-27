@@ -1,8 +1,6 @@
-const jsdom = require("jsdom");
-const puppeteer = require('puppeteer');
-const { JSDOM } = jsdom;
 
-let email = '';
+const puppeteer = require('puppeteer');
+var minutemail = require('10minutemail')
 
 init();
 
@@ -10,11 +8,52 @@ async function init() {
 	// const dom = await JSDOM.fromURL("https://10minutemail.net/");
 	// const email = dom.window.document.getElementById('fe_text').value;
 	// console.log(email);
-	await sendApiKeyToEmail("mgo11240@bcaoo.com");
-	console.log('Finish');
+
+
+	mail = minutemail({ timeout: 100000, startup: true });
+	let emailAdress = await getEmail(mail);
+	console.log('Getted email:', emailAdress)
+	await sendApiKeyToEmail(emailAdress);
+	console.log('Email send!')
+	mail.start();
+	console.log("Wait email...")
+	await waitEmail2(mail);
+	console.log('Finish', emailAdress);
+}
+
+async function getEmail(mail) {
+	return new Promise((resolve) => {
+		mail.on('address', (address) => resolve(address));
+	})
+	// mail.on('mail', (mails) => console.log(mails[0].subject));
+	// mail.on('count', (count) => console.log(count));
 }
 
 async function sendApiKeyToEmail(email) {
+	const browser = await puppeteer.launch();
+	const page = await browser.newPage();
+	await page.goto("https://tinypng.com/developers", { waitUntil: 'networkidle2' });
+	await page.focus("form.developers input[name='fullName']");
+	await page.keyboard.type('Max Molod');
+	await page.focus("form.developers input[name='mail']");
+	await page.keyboard.type(email);
+	await page.click("form.developers input[type='submit']");
+	await browser.close();
+}
+
+async function waitEmail2(mail) {
+	return new Promise((resolve) => {
+		mail.on('mail', (mails) => { 
+			if(mails.length > 0) {
+				console.log('mails[0].subject', mails[0].subject);
+				console.log('mails', mails);
+				return resolve(mails.length);
+			}
+		});
+	})
+}
+
+async function sendApiKeyToEmail2(email) {
 	const args = ['--proxy-server=169.57.157.148:80'];
 	const browser = await puppeteer.launch();
 
@@ -33,7 +72,7 @@ async function sendApiKeyToEmail(email) {
 	const page2 = await browser.newPage();
 	await page2.goto("https://tinypng.com/developers", { waitUntil: 'networkidle2' });
 	await page2.focus("form.developers input[name='fullName']");
-	await page2.keyboard.type('Alex Hrod');
+	await page2.keyboard.type('Max Molod');
 	await page2.focus("form.developers input[name='mail']");
 	await page2.keyboard.type(email);
 	await page2.click("form.developers input[type='submit']");
@@ -49,7 +88,6 @@ async function sendApiKeyToEmail(email) {
 		return document.getElementById("maillist").firstElementChild.childNodes.length;
 	});
 	console.log(res, res2)
-	if (res2 > res) return;
 
 	// Tinify <support@tinify.com>
 
