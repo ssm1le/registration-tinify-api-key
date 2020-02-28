@@ -50,6 +50,7 @@ async function sendApiKeyToEmail2(email) {
 				resolve();
 			}
 			if (count > 15) {
+				clearInterval(interval);
 				reject("Email not delivered!");
 			}
 			console.log(res, res2);
