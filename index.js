@@ -40,13 +40,21 @@ async function sendApiKeyToEmail2(email) {
 	email = await page.evaluate(element2 => element2.value, element2);
 	console.log(email);
 	console.log("Wait 1 minutes...");
-	await new Promise(resolve => setInterval(async () => {
-		let res2 = await page.evaluate(() => document.getElementById("maillist").firstElementChild.childNodes.length - 1);
-		if (res < res2) {
-			resolve();
-		}
-		console.log(res, res2);
-	}, 15000));
+	await new Promise((resolve, reject) => {
+		let count = 0;
+		let interval = setInterval(async () => {
+			let res2 = await page.evaluate(() => document.getElementById("maillist").firstElementChild.childNodes.length - 1);
+			count++;
+			if (res < res2) {
+				clearInterval(interval);
+				resolve();
+			}
+			if (count > 15) {
+				reject("Email not delivered!");
+			}
+			console.log(res, res2);
+		}, 15000)
+	});
 	let link = await page.evaluate(() => document.querySelector("#maillist tr:nth-child(2) td:nth-child(2) a").href);
 	await page.goto(link, { waitUntil: 'networkidle2' });
 	const element4 = await page.$("#fe_text");
