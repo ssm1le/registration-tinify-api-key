@@ -14,7 +14,8 @@ async function sendApiKeyToEmail() {
 	const context = await browser.createIncognitoBrowserContext();
 
 	const emailPage = await context.newPage();
-	await emailPage.goto("https://10minutemail.net/", { waitUntil: 'networkidle2' });
+	emailPage.goto("https://10minutemail.net/", { waitUntil: 'networkidle2' });
+	await emailPage.waitForSelector("#fe_text");
 	let emailSelector = await emailPage.$("#fe_text");
 	let email = await emailPage.evaluate(emailSelector => emailSelector.value, emailSelector);
 	console.log(email)
