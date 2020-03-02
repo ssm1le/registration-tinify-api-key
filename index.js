@@ -38,11 +38,11 @@ async function getApiKey() {
 	await tinyPage.waitFor(2000);
 
 	if (isError) {
-		console.log('Error with tinyPNG api');
+		console.warn(await tinyPage.evaluate(() => document.querySelectorAll('.error').textContent));
 		await context.close();
 		return;
 	} else if (isSuccess) {
-		console.log('Email send!');
+		console.log(await tinyPage.evaluate(() => document.querySelector('.success p').textContent));
 	}
 
 	console.log("Wait email from tiny...");
@@ -59,5 +59,5 @@ async function getApiKey() {
 	const KEY = await emailPage.evaluate(() => document.querySelector("tbody .key span").textContent);
 	console.log("KEY: " + KEY);
 
-	await context.close();
+	await browser.close();
 }
