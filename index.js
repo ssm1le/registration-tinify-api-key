@@ -27,14 +27,18 @@ async function sendApiKeyToEmail() {
 		const tinyPage = await context.newPage();
 		await tinyPage.goto("https://tinypng.com/developers", { waitUntil: 'networkidle2' });
 		await tinyPage.focus("form.developers input[name='fullName']");
-		await tinyPage.keyboard.type('Max Molod');
+		await tinyPage.keyboard.tycpe('Max Molod');
 		await tinyPage.focus("form.developers input[name='mail']");
-		await tinyPage.keyboard.type("rph66912@zzrgg.com");
+		await tinyPage.keyboard.type(email);
 		await tinyPage.click("form.developers input[type='submit']");
 
-		let isError = await tinyPage.evaluate(() => document.querySelector('.error').textContent);
+		await tinyPage.waitFor(2000);
+		let isError = await tinyPage.evaluate(() => document.querySelectorAll('.error').length);
+
 		if (isError) {
-			throw isError.textContent
+			console.log('Error with tinyPNG api');
+			await context.close();
+			return;
 		} else {
 			console.log('Email send!');
 		}
@@ -56,6 +60,8 @@ async function sendApiKeyToEmail() {
 			if (count > 15) {
 				clearInterval(interval);
 				reject("Email not delivered!");
+				await context.close();
+				return;
 			}
 			console.log(emailResult, res2);
 		}, 15000)
@@ -74,5 +80,4 @@ async function sendApiKeyToEmail() {
 	console.log(getApiKey);
 
 	await context.close();
-	resolve();
 }
