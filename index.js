@@ -1,29 +1,28 @@
 
 const puppeteer = require('puppeteer');
+const clipboardy = require('clipboardy');
 
 init();
 
 async function init() {
-	await sendApiKeyToEmail();
+	await getApiKey();
 	console.log('Finish');
+	return;
 }
 
-async function sendApiKeyToEmail() {
-	// const args = ['--proxy-server=169.57.157.148:80'];
-	const browser = await puppeteer.launch({headless: false});
+async function getApiKey() {
+	const browser = await puppeteer.launch({ headless: false });
 	const context = await browser.createIncognitoBrowserContext();
 
 	const emailPage = await context.newPage();
-	emailPage.goto("https://10minutemail.net/", { waitUntil: 'networkidle2' });
-	await emailPage.waitForSelector("#fe_text");
-	let emailSelector = await emailPage.$("#fe_text");
-	let email = await emailPage.evaluate(emailSelector => emailSelector.value, emailSelector);
-	console.log(email)
+	await emailPage.deleteCookie();
+	await emailPage.goto("https://10minemail.com/ru/");
+	await emailPage.waitForSelector('.hidden-xs-sm button.click-to-copy');
+	await emailPage.click('.hidden-xs-sm button.click-to-copy');
 
-	let emailResult = await emailPage.evaluate(() => document.getElementById("maillist").firstElementChild.childNodes.length - 1);
+	const email = clipboardy.readSync();
 
-	console.log(emailResult, email);
-
+	console.log("Email: " + email);
 
 	const tinyPage = await context.newPage();
 	await tinyPage.goto("https://tinypng.com/developers", { waitUntil: 'networkidle2' });
@@ -35,46 +34,30 @@ async function sendApiKeyToEmail() {
 
 	await tinyPage.waitFor(2000);
 	let isError = await tinyPage.evaluate(() => document.querySelectorAll('.error').length);
+	let isSuccess = await tinyPage.evaluate(() => document.querySelectorAll('.success').length);
+	await tinyPage.waitFor(2000);
 
 	if (isError) {
 		console.log('Error with tinyPNG api');
 		await context.close();
 		return;
-	} else {
+	} else if (isSuccess) {
 		console.log('Email send!');
 	}
 
 	console.log("Wait email from tiny...");
-	await new Promise((resolve, reject) => {
-		let count = 0;
-		let interval = setInterval(async () => {
-			let res2 = await emailPage.evaluate(() => document.getElementById("maillist").firstElementChild.childNodes.length - 1);
-			count++;
-			if (emailResult < res2) {
-				clearInterval(interval);
-				resolve();
-			}
-			if (count > 15) {
-				clearInterval(interval);
-				reject("Email not delivered!");
-				await context.close();
-				return;
-			}
-			console.log(emailResult, res2);
-		}, 15000)
-	});
 
-	let getLinkToMail = await emailPage.evaluate(() => document.querySelector("#maillist tr:nth-child(2) td:nth-child(2) a").href);
-	await emailPage.goto(getLinkToMail, { waitUntil: 'networkidle2' });
+	await emailPage.waitFor(2000);
+	await emailPage.waitForSelector('li:not(.hide) .viewLink.link:not(.hide)');
+	await emailPage.click('li:not(.hide) .viewLink.link:not(.hide)');
+	await emailPage.waitFor(2000);
+	await emailPage.waitForSelector('p.button a');
+	await emailPage.click('p.button a');
+	await emailPage.waitFor(2000);
+	await emailPage.waitForSelector('tbody .key span');
 
-	console.log(getLinkToMail);
-
-	let getLinkToTiny = await emailPage.evaluate(() => document.querySelector("div.mailinhtml .button a").href);
-	await emailPage.goto(getLinkToTiny, { waitUntil: 'networkidle2' });
-
-	let getApiKey = await emailPage.evaluate(() => document.querySelector("tbody .key span").textContent);
-
-	console.log(getApiKey);
+	const KEY = await emailPage.evaluate(() => document.querySelector("tbody .key span").textContent);
+	console.log("KEY: " + KEY);
 
 	await context.close();
 }
