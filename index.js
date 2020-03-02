@@ -10,7 +10,7 @@ async function init() {
 
 async function sendApiKeyToEmail() {
 	// const args = ['--proxy-server=169.57.157.148:80'];
-	const browser = await puppeteer.launch();
+	const browser = await puppeteer.launch({headless: false});
 	const context = await browser.createIncognitoBrowserContext();
 
 	const emailPage = await context.newPage();
@@ -23,28 +23,24 @@ async function sendApiKeyToEmail() {
 
 	console.log(emailResult, email);
 
-	try {
-		const tinyPage = await context.newPage();
-		await tinyPage.goto("https://tinypng.com/developers", { waitUntil: 'networkidle2' });
-		await tinyPage.focus("form.developers input[name='fullName']");
-		await tinyPage.keyboard.tycpe('Max Molod');
-		await tinyPage.focus("form.developers input[name='mail']");
-		await tinyPage.keyboard.type(email);
-		await tinyPage.click("form.developers input[type='submit']");
 
-		await tinyPage.waitFor(2000);
-		let isError = await tinyPage.evaluate(() => document.querySelectorAll('.error').length);
+	const tinyPage = await context.newPage();
+	await tinyPage.goto("https://tinypng.com/developers", { waitUntil: 'networkidle2' });
+	await tinyPage.focus("form.developers input[name='fullName']");
+	await tinyPage.keyboard.type('Max Molod');
+	await tinyPage.focus("form.developers input[name='mail']");
+	await tinyPage.keyboard.type(email);
+	await tinyPage.click("form.developers input[type='submit']");
 
-		if (isError) {
-			console.log('Error with tinyPNG api');
-			await context.close();
-			return;
-		} else {
-			console.log('Email send!');
-		}
-	}
-	catch (err) {
-		reject(err)
+	await tinyPage.waitFor(2000);
+	let isError = await tinyPage.evaluate(() => document.querySelectorAll('.error').length);
+
+	if (isError) {
+		console.log('Error with tinyPNG api');
+		await context.close();
+		return;
+	} else {
+		console.log('Email send!');
 	}
 
 	console.log("Wait email from tiny...");
