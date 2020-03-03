@@ -9,9 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "10minutemail": "^0.2.0",
     "clipboardy": "^2.2.0",
-    "jsdom": "^16.2.0",
     "puppeteer": "^2.1.1",
     "unique-names-generator": "^4.2.0"
   }
