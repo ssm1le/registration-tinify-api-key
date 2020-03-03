@@ -1,6 +1,16 @@
 
 const puppeteer = require('puppeteer');
 const clipboardy = require('clipboardy');
+const uniqueNamesGenerator = require("unique-names-generator").uniqueNamesGenerator;
+const names = require("unique-names-generator").names;
+const adjectives = require("unique-names-generator").adjectives;
+
+const getRandomName = uniqueNamesGenerator({
+	dictionaries: [names, adjectives],
+	separator: ' ',
+	length: 2,
+	style: 'capital'
+});
 
 init();
 
@@ -27,7 +37,7 @@ async function getApiKey() {
 	const tinyPage = await context.newPage();
 	await tinyPage.goto("https://tinypng.com/developers", { waitUntil: 'networkidle2' });
 	await tinyPage.focus("form.developers input[name='fullName']");
-	await tinyPage.keyboard.type('Max Molod');
+	await tinyPage.keyboard.type(getRandomName);
 	await tinyPage.focus("form.developers input[name='mail']");
 	await tinyPage.keyboard.type(email);
 	await tinyPage.click("form.developers input[type='submit']");
@@ -39,7 +49,7 @@ async function getApiKey() {
 
 	if (isError) {
 		console.warn(await tinyPage.evaluate(() => document.querySelectorAll('.error').textContent));
-		await context.close();
+		await browser.close();
 		return;
 	} else if (isSuccess) {
 		console.log(await tinyPage.evaluate(() => document.querySelector('.success p').textContent));
